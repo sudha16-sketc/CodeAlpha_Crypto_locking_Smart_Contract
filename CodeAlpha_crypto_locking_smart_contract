@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+contract  crytoLockVault{
+    //mapping to store the of ETH deposited by each user 
+    mapping(address=> uint)public balances;
+
+    // mapping to store the unlock time for each user
+    mapping(address =>uint256 ) public unlockTime;
+
+    //deposit function with lock in duration 
+    function deposit(uint _lockdurationISeconds)external payable{
+        require(msg.value>0,"pls send ETH");
+        require(balances[msg.sender]==0,"already deposited");
+        balances[msg.sender]= msg.value;
+       unlockTime[msg.sender] =block.timestamp + _lockdurationISeconds ;// lock in for the duration of 10 seconds
+       
+    }
+    function withdraw()external {
+        require(balances[msg.sender]>0,"no funds for withdrawal");
+        require(block.timestamp>= unlockTime[msg.sender],"funds are still locked");
+
+        uint amount= balances[msg.sender];
+        balances[msg.sender]=0;
+        unlockTime[msg.sender]=0;
+         
+        // transfer the ether back to user
+        (bool sent,) =msg.sender.call{value : amount}("");
+        require(sent,"transfer was failed");
+
+    }
+
+    //helper function to check remaining lock time (option) 
+    function getRemainingLockTime(address user) public view returns (uint){
+        if (block.timestamp>= unlockTime[user]){
+            return 0;
+
+        }
+        return unlockTime[user]- block.timestamp;
+    }
+}
