@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Crypto Lock DApp</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+</head>
+<style>
+    body {
+
+        background-image: url("asset/Screenshot\ 2025-06-29\ 162632.png");
+
+        background-position: center center;
+        background-size: max(1250px, 100vw);
+        background-repeat: no-repeat;
+        height: 97vh;
+        position: relative;
+
+
+    }
+
+    .main {
+        margin: 20px;
+        padding: 20px;
+        display: flex;
+        
+    }
+    .left{
+        margin: 0px 40px ;
+        
+        
+    }
+    .right{
+        background-image: url("asset/porfile.png");
+        width: 400px;
+        height: 400px;
+        background-position: center center;       
+        align-self: center center ;
+        border-radius: 50%;
+        margin-left: 400px;
+         box-shadow: 18px 18px 25px rgb(0, 0, 0);
+    }
+    .header{
+        text-align: center;
+    }
+    .heading {
+        font-size: 50px;
+        text-align: center;
+         text-shadow: 18px 18px 25px rgb(0, 0, 0);
+    }
+
+    .connectWallet {
+       border-radius: 10px;
+        width: 300px;
+        height: 30px;
+        opacity: 50%;
+        margin: 5px;
+        padding: 5px;
+         box-shadow: 18px 18px 25px rgb(0, 0, 0);
+        text-align: center;
+        
+    }
+
+    .lockETH {
+        border-radius: 10px;
+        width: 300px;
+        height: 30px;
+        opacity: 50%;
+        margin: 5px;
+        padding: 5px;
+         box-shadow: 18px 18px 25px rgb(0, 0, 0);
+        
+    }
+    h1{
+         font-size: 30px;
+          text-shadow: 18px 18px 25px rgb(0, 0, 0);
+    }
+
+
+</style>
+
+<body>
+    <section class="header">
+     <h2 class="heading ">🔐 Crypto Lock DApp</h2>
+    <button class="connectWallet" onclick="connectWallet()">Connect Wallet</button>
+    </section>
+    <section  class="main">
+        <section class="left">
+       
+      
+
+        <div>
+            <h1>Lock ETH</h1>
+            <div><input type="number" class="lockETH" id="ethAmount" placeholder="Amount in ETH" /></div>
+            <div><input type="number" class="lockETH" id="lockTime" placeholder="Lock time in seconds" /></div>
+            <div><button class="lockETH" onclick="deposit()">Lock Now</button></div>
+        </div>
+
+        <div class="UnlockFund">
+            <h1>Unlock Funds</h1>
+            <button class="lockETH" onclick="withdraw()">Withdraw</button>
+        </div>
+
+        <div class="ViewMyLock">
+            <h1>🔎 View My Lock</h1>
+            <button class="lockETH" onclick="getLockDetails()">Show Lock Info</button>
+            <p id="lockInfo">-</p>
+        </div>
+    </section>
+    <section class="right">
+
+    </section>
+    </section>
+
+    <p id="status" style="margin-top: 20px; color: green;"></p>
+
+    <script>
+        const contractAddress = "0x53EeB3cEa9871a3f409e73AE087092942ab7c266";
+        const contractABI = [
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "_lockdurationISeconds",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "deposit",
+                "outputs": [],
+                "stateMutability": "payable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "withdraw",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "name": "balances",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "user",
+                        "type": "address"
+                    }
+                ],
+                "name": "getRemainingLockTime",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "name": "unlockTime",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        let provider, signer, contract;
+
+        async function connectWallet() {
+            if (window.ethereum) {
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                contract = new ethers.Contract(contractAddress, contractABI, signer);
+                alert("✅ Wallet Connected");
+            }
+        }
+
+        async function deposit() {
+            const eth = document.getElementById("ethAmount").value;
+            const lockTime = document.getElementById("lockTime").value;
+
+            if (!eth || !lockTime) {
+                alert("Fill in both ETH amount and lock time");
+                return;
+            }
+
+            try {
+                const tx = await contract.deposit(lockTime, {
+                    value: ethers.utils.parseEther(eth)
+                });
+                document.getElementById("status").innerText = "⏳ Locking ETH...";
+                await tx.wait();
+                document.getElementById("status").innerText = "✅ ETH Locked!";
+            } catch (err) {
+                document.getElementById("status").innerText = "❌ Error: " + err.message;
+            }
+        }
+
+        async function withdraw() {
+            try {
+                const tx = await contract.withdraw();
+                document.getElementById("status").innerText = "⏳ Withdrawing...";
+                await tx.wait();
+                document.getElementById("status").innerText = "✅ Withdraw Successful!";
+            } catch (err) {
+                document.getElementById("status").innerText = "❌ Error: " + err.message;
+            }
+        }
+
+        async function getLockDetails() {
+            try {
+                const [amount, unlockTime] = await contract.getMyLockDetails();
+                const ethAmount = ethers.utils.formatEther(amount);
+                const time = new Date(unlockTime * 1000).toLocaleString();
+                document.getElementById("lockInfo").innerText = `🔐 Locked: ${ethAmount} ETH | ⏱ Unlock Time: ${time}`;
+            } catch (err) {
+                document.getElementById("lockInfo").innerText = "❌ Failed to fetch lock info.";
+            }
+        }
+    </script>
+</body>
+
+</html>
